@@ -1,0 +1,10 @@
+<form action="{% url 'sentimentsamples:main' %}" method="get">
+<input type="text" name="searchbox" value="{{query}}">
+<input type="submit" value="Search">
+<br>
+    <ol>
+    {% for query_item in query_list %}
+        <li>Name - {{ query_item }}</li>
+    {% endfor %}
+    </ol>
+</form>
