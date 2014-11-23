@@ -4,23 +4,60 @@ from django.views import generic
 
 # Create your views here.
 from django.http import HttpResponse
+from sentimentsamples.models import Opinion
+
+from TwitterCrawler.TwitterCrawler import  *
+twitterCrawler = None
 def main(request):
-    # Get the query entered by the user
-    #On first request there is no form data submitted so request.GET would not have any data. So doing request.GET['pub_date_from'] will fail. You shall use .get() method
-    #query = request.GET['searchbox'] 
-    try:
-        query = request.GET['searchbox']
-    except:
-        # The first load will have no keys in GET dict.
-        query = ""
     
+    # Handle the query
+    #--------------------    
+    try:
+        # Get the query entered by the user
+        query = request.GET['searchbox']
+        
+        # Start the TwitterCrawler
+        import os        
+        configFileCrawler = os.path.join(os.getcwd(),'sentiment', 'TwitterCrawler','Configurations', 'Configurations.xml')
+        twitterCrawler = TwitterCrawler(configFileCrawler, None, None, None)
+        results = twitterCrawler.SearchQueryAPI(query, -1, -1)
+        #showsome(query)
+        
+        # Update the DB
+        for result in results:
+            opinion = Opinion(text=result['text'], sentiment=Opinion.Neutral, source_url='https://twitter.com/search?q='+query)        
+            opinion.save()
+        
+    except Exception as e:
+        # No query entered
+        query = ""
+            
+    # Render the response
+    #--------------------   
+            
     # Load the main page template
     template = loader.get_template('sentimentsamples/main.html')
     
     # Fill the query list
-    query_list = ['One', 'Two', 'Three']
+    opinion_list = Opinion.objects.order_by('text')[:1000]
+    
     # Render with the query
-    context = RequestContext(request, {'query': query, 'query_list' : query_list})
+    context = RequestContext(request, {'query': query, 'opinion_list' : opinion_list})
    
     return HttpResponse(template.render(context))
 
+import json
+import urllib.request, urllib.parse
+
+def showsome(searchfor):
+  query = urllib.parse.urlencode({'q': searchfor})
+  url = 'http://ajax.googleapis.com/ajax/services/search/web?v=1.0&%s' % query
+  search_response = urllib.request.urlopen(url)
+  search_results = search_response.read().decode("utf8")
+  results = json.loads(search_results)
+  data = results['responseData']
+  print('Total results: %s' % data['cursor']['estimatedResultCount'])
+  hits = data['results']
+  print('Top %d hits:' % len(hits))
+  for h in hits: print(' ', h['url'])
+  print('For more results, see %s' % data['cursor']['moreResultsUrl'])

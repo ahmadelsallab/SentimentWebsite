@@ -2,9 +2,8 @@
 <input type="text" name="searchbox" value="{{query}}">
 <input type="submit" value="Search">
 <br>
-    <ol>
-    {% for query_item in query_list %}
-        <li>Name - {{ query_item }}</li>
+    {% for opinion in opinion_list %}
+        <b>{{opinion.text}} -- {{opinion.sentiment}} -- {{opinion.source_url}}</b>
+        <br>
     {% endfor %}
-    </ol>
 </form>
