@@ -43,7 +43,7 @@ def main(request):
     opinion_list = Opinion.objects.order_by('text')[:1000]
     
     # Render with the query
-    context = RequestContext(request, {'query': query, 'opinion_list' : opinion_list, 'polarity_style' : polarityStyle['Positive']})
+    context = RequestContext(request, {'query': query, 'opinion_list' : opinion_list})
    
     return HttpResponse(template.render(context))
 
