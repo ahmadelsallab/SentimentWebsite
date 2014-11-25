@@ -8,6 +8,7 @@ from sentimentsamples.models import Opinion
 
 from TwitterCrawler.TwitterCrawler import  *
 twitterCrawler = None
+polarityStyle = {'Positive' : 'alert alert-success', 'Negative' : 'alert alert-danger', 'Neutral' : 'alert alert-warning'}
 def main(request):
     
     # Handle the query
@@ -42,7 +43,7 @@ def main(request):
     opinion_list = Opinion.objects.order_by('text')[:1000]
     
     # Render with the query
-    context = RequestContext(request, {'query': query, 'opinion_list' : opinion_list})
+    context = RequestContext(request, {'query': query, 'opinion_list' : opinion_list, 'polarity_style' : polarityStyle['Positive']})
    
     return HttpResponse(template.render(context))
 
