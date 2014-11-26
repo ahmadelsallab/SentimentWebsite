@@ -19,7 +19,8 @@ def main(request):
         
         # Start the TwitterCrawler
         import os        
-        configFileCrawler = os.path.join(os.getcwd(),'sentiment', 'TwitterCrawler','Configurations', 'Configurations.xml')
+        BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+        configFileCrawler = os.path.join(BASE_DIR, 'TwitterCrawler','Configurations', 'Configurations.xml')
         twitterCrawler = TwitterCrawler(configFileCrawler, None, None, None)
         results = twitterCrawler.SearchQueryAPI(query, -1, -1)
         #showsome(query)
