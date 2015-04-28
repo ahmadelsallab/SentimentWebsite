@@ -7,8 +7,68 @@ from django.http import HttpResponse
 from sentimentsamples.models import Opinion
 
 from TwitterCrawler.TwitterCrawler import  *
+import sys
+#import os
+#os.environ["PYTHONPATH"] = ("..\\..\\sentimentanalysis")
+#sys.path.append("C:\\Non_valeo\\Research\\PostDoc\\Sentiment Analysis\\Code\\sentimentanalysis")
+#sys.path.append("..\\..\\sentimentanalysis")
+from datasetbuilder.DatasetBuilder import DatasetBuilder
+from languagemodel.LanguageModel import LanguageModel   
+from featuresextractor.FeaturesExtractor import FeaturesExtractor
+from classifiers.Classifier import Classifier
+
 twitterCrawler = None
 polarityStyle = {'Positive' : 'alert alert-success', 'Negative' : 'alert alert-danger', 'Neutral' : 'alert alert-warning'}
+
+# Start the DatasetBuilder
+#-------------------------
+# Configurations file xml of the dataset builder
+import os
+print(os.getcwd())
+configFileDatasetBuilder = "sentimentanalysis\\configurations\\Configurations_DatasetBuilder.xml"
+
+datasetSerializationFile = "sentimentanalysis\\output_results\\results_tweets.bin"
+
+# Initialize the DatasetBuilder from serialization file
+datasetBuilder = DatasetBuilder(configFileDatasetBuilder, [], datasetSerializationFile)
+
+# Start the LanguageModel
+#-------------------------
+# Configurations file xml of the language model
+configFileLanguageModel = "sentimentanalysis\\configurations\\Configurations_LanguageModel-lexicon.xml"
+
+#positiveLangModelTxtLoadFile = ".\\LanguageModel\\Input\\Eshrag-positive.txt"
+positiveLangModelTxtLoadFile = "sentimentanalysis\\input_data\\positive.txt"
+#negativeLangModelTxtLoadFile = ".\\LanguageModel\\Input\\Eshrag-negative.txt"
+negativeLangModelTxtLoadFile = "sentimentanalysis\\input_data\\negative.txt"
+stopWordsFileName = "sentimentanalysis\\input_data\\stop_words.txt"
+# The serialization file to save the model
+languageModelSerializationFile = "sentimentanalysis\\LanguageModel\\Output\\language_model.bin"
+
+# Start the LanguageModel:
+
+# Initialize the LanguageModel
+languageModel = LanguageModel(configFileLanguageModel, stopWordsFileName, [], [], [])
+languageModel.LoadSentimentLexiconModelFromTxtFile(positiveLangModelTxtLoadFile, 1)
+languageModel.LoadSentimentLexiconModelFromTxtFile(negativeLangModelTxtLoadFile, -1)
+
+# Start the FeaturesExtractor:
+#-----------------------------
+# Configurations file xml of the features extractor
+configFileFeaturesExtractor = "sentimentanalysis\\configurations\\Configurations_FeaturesExtractor-Lexicon.xml"
+exportFileName = "sentimentanalysis\\\output_results\\features.txt"
+ 
+
+
+# Start the Classifier:
+#----------------------
+# The serialization file to save the features
+configFileClassifier = "sentimentanalysis\\configurations\\Configurations_Classifier-lexicon.xml"
+
+
+
+
+
 def main(request):
     
     # Handle the query
@@ -23,11 +83,21 @@ def main(request):
         configFileCrawler = os.path.join(BASE_DIR, 'TwitterCrawler','Configurations', 'Configurations.xml')
         twitterCrawler = TwitterCrawler(configFileCrawler, None, None, None)
         results = twitterCrawler.SearchQueryAPI(query, -1, -1)
+        print('Crawling finished')
         #showsome(query)
         
         # Update the DB
         for result in results:
-            opinion = Opinion(text=result['text'], sentiment=Opinion.Neutral, source_url='https://twitter.com/search?q='+query)        
+            datasetBuilder.trainSet = []
+            datasetBuilder.trainSet.append({'label': 'Positive', 'text':result['text']})
+            # Initialize the FeaturesExtractor
+            testFeaturesExtractor = FeaturesExtractor(configFileFeaturesExtractor, [], [], languageModel, datasetBuilder.trainSet)
+            testFeaturesExtractor.ExtractLexiconFeatures()
+            classifier = Classifier(configFileClassifier, [],  None, None, testFeaturesExtractor.features, testFeaturesExtractor.labels)
+            sentiment_lexicon_predicted = classifier.LexiconPredict(testFeaturesExtractor.features[0])
+            print(sentiment_lexicon_predicted)
+            #sentiment_lexicon_predicted = 1
+            opinion = Opinion(text=result['text'], sentiment=sentiment_lexicon_predicted, source_url='https://twitter.com/search?q='+query)        
             opinion.save()
         
     except Exception as e:

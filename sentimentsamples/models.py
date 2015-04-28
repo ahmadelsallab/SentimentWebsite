@@ -4,9 +4,9 @@ from django.db import models
 
 class Opinion(models.Model):
     # Enum for sentiment classes
-    Positive = 0
-    Negative = 1
-    Neutral = 2
+    Positive = 1
+    Negative = 2
+    Neutral = 3
     SENTIMENT_CLASSES = ((Positive, 'Positive'),
                         (Negative, 'Negative'),
                         (Neutral, 'Neutral'),)

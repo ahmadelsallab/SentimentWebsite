@@ -37,15 +37,15 @@
         <br>
         
         {% for opinion in opinion_list %}
-        	{% if opinion.sentiment == 0 %}
+        	{% if opinion.sentiment == 1 %}
         <div class="alert alert-success" role="alert">
             {{opinion.text}} -- {{opinion.sentiment}} -- {{opinion.source_url}}
         </div>
-        	{% elif opinion.sentiment == 1 %}
+        	{% elif opinion.sentiment == 2 %}
         <div class="alert alert-danger" role="alert">
             {{opinion.text}} -- {{opinion.sentiment}} -- {{opinion.source_url}}
         </div>        	
-        	{% elif opinion.sentiment == 2 %}
+        	{% elif opinion.sentiment == 3 %}
         <div class="alert alert-warning" role="alert">
             {{opinion.text}} -- {{opinion.sentiment}} -- {{opinion.source_url}}
         </div>       
